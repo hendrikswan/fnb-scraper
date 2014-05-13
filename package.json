@@ -1,6 +1,11 @@
 {
-  "name": "fnb-scraper",
-  "description": "an fnb scraper",
-  "main": "index.js",
-  "author": "Hendrik and Mark",
+    "name": "fnb-scraper",
+    "description": "an fnb scraper",
+    "main": "index.js",
+    "author": "Hendrik and Mark",
+    "dependencies": {
+        "express": "latest",
+        "request": "latest",
+        "cheerio": "latest"
+    }
 }
