@@ -1,0 +1,6 @@
+{
+  "name": "fnb-scraper",
+  "description": "an fnb scraper",
+  "main": "index.js",
+  "author": "Hendrik and Mark",
+}
