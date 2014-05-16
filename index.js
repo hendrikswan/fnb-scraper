@@ -1,4 +1,4 @@
-var request     = require('request');
+var request         = require('request');
 var cheerio     = require('cheerio');
 var stdio       = require('stdio');
 var https       = require('https');
@@ -6,6 +6,7 @@ var querystring = require('querystring');
 var zlib        = require('zlib');
 var _           = require('underscore');
 var Q           = require('q');
+var AdmZip      = require('adm-zip');
 
 var tunnel = require('tunnel');
 
@@ -310,12 +311,60 @@ function doHEAD(cb){
 
 
 function promptCSV(cb){
-    hitPage({
-        path: '/banking/Controller?nav=accounts.transactionhistory.navigator.TransactionHistoryDDADownload&downloadFormat=csv',
-        log: true,
-        method: 'GET',
-        content_type: 'application/x-zip'
-    }, cb);
+    var host =  'www.online.fnb.co.za';
+    var path =  '/banking/Controller?nav=accounts.transactionhistory.navigator.TransactionHistoryDDADownload&downloadFormat=csv';
+    var method =  'GET';
+
+    var options = {
+        host: host,
+        port: '443',
+        path: path,
+        method: method,
+        agent: tunnelingAgent,
+        headers: {
+            'cookie': cookie,
+            'Host' :   host,
+            'Connection' : 'keep-alive',
+            'Content-Length' : 0,
+            'Accept' :  'text/html, */*; q=0.01',
+            'Origin' : host,
+            'X-Requested-With' :   'XMLHttpRequest',
+            'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
+            'Referer' : 'https://www.online.fnb.co.za/banking/main.jsp',
+            'Accept-Encoding' : 'gzip,deflate,sdch',
+            'Accept-Language' : 'en-US,en;q=0.8',
+            'Content-Type': 'application/x-zip'
+        }
+    };
+
+
+    https.get(options, function(res) {
+        var data = [], dataLen = 0;
+
+        res.on('data', function(chunk) {
+
+                data.push(chunk);
+                dataLen += chunk.length;
+
+            }).on('end', function() {
+                var buf = new Buffer(dataLen);
+
+                for (var i=0, len = data.length, pos = 0; i < len; i++) {
+                    data[i].copy(buf, pos);
+                    pos += data[i].length;
+                }
+
+
+                console.log(buf);
+                var zip = new AdmZip(buf);
+                var zipEntries = zip.getEntries();
+                console.log(zipEntries.length)
+
+                for (var i = 0; i < zipEntries.length; i++){
+                    console.log(zip.readAsText(zipEntries[i]));
+                }
+            });
+    });
 }
 
 

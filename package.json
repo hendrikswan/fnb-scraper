@@ -10,6 +10,6 @@
     "stdio": "~0.1.5",
     "underscore": "~1.6.0",
     "q": "~1.0.1",
-    "tunnel": "latest"
+    "adm-zip": "~0.4.4"
   }
 }
