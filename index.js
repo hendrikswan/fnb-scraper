@@ -199,9 +199,6 @@ function logonToFNB(cb){
 
 
 
-        agent: tunnelingAgent,
-        agent: tunnelingAgent,
-
 function hitPage(args, cb){
 
     var host = args.host || 'www.online.fnb.co.za';
@@ -212,10 +209,9 @@ function hitPage(args, cb){
     var options = {
         host: host,
         port: '443',
-        agent: tunnelingAgent,
         path: path,
         method: method,
- 	agent: tunnelingAgent,
+ 	    agent: tunnelingAgent,
         headers: {
             'cookie': cookie,
             'Host' :   host,
