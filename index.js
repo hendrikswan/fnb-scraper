@@ -18,8 +18,6 @@ var tunnelingAgent = tunnel.httpsOverHttp({
   }
 });
 
-//https.globalAgent.options.secureProtocol = 'SSLv3_method';
-
 
 var cred_options = stdio.getopt({
     'username': {
@@ -80,8 +78,6 @@ function getCookieFromResponse(res){
             cookie+=cookie_key + '=' + cookie_val + ';';
         }
     }
-
-    // console.log(cookie);
 
     return cookie;
 }
@@ -203,121 +199,30 @@ function logonToFNB(cb){
 
 
 
-function hitHomePage(cb)
-{
-        // An object of options to indicate where to post to
-    var homepage_options = {
-        host: 'www.fnb.co.za',
-        port: '443',
         agent: tunnelingAgent,
-        path: '/',
-        method: 'GET',
-        headers: {
-            'accept-encoding': 'gzip',
-        }
-    };
-
-    // Set up the request
-    var homepage_req = https.request(homepage_options, function(res) {
-        parseAndSaveCookie(res);
-        cb(null);
-
-    }).end();
-}
-
-function redirectAfterLogon(logon_result, cb){
-    var options = {
-        host: 'www.online.fnb.co.za',
-        port: '443',
         agent: tunnelingAgent,
-        path: '/banking/Controller?' + logon_result.querystring,
-        method: 'GET',
-        headers: {
-            'accept-encoding': 'gzip',
-            'cookie': cookie
-        }
-    };
 
+function hitPage(args, cb){
 
-    // Set up the request
-    var req = https.request(options, function(res) {
-        res.pipe(zlib.createGunzip()).on('data', function(chunk) {
-            //console.log(chunk + '');
-            parseAndSaveCookie(res);
-            cb(null, chunk);
-        });
+    var host = args.host || 'www.online.fnb.co.za';
+    var path = args.path || '/';
+    var log  = args.log  || false;
+    var method = args.method || 'POST';
 
-
-        res.on('error', function(err) {
-            // console.log(err);
-            return cb(err);
-        })
-
-    }).end();
-}
-
-function getBankAccountLinks(cb){
     var options = {
-        host: 'www.online.fnb.co.za',
+        host: host,
         port: '443',
-        agent: tunnelingAgent,
-        path: '/banking/Controller?nav=accounts.summaryofaccountbalances.navigator.SummaryOfAccountBalances&FARFN=4&actionchild=1&isTopMenu=true&targetDiv=workspace',
-        method: 'POST',
-        headers: {
-            'accept-encoding': 'gzip',
-            'cookie': cookie
-        }
-    };
-
-    // console.log(options);
-
-    var gunzip = zlib.createGunzip();
-
-    // Set up the request
-    var req = https.request(options)
-    .on('response', function(res){
-        //parseAndSaveCookie(res);
-        var buffer = '';
-
-        gunzip.on('data', function(chunk) {
-            buffer+= chunk;
-        });
-
-        gunzip.on('end', function(){
-            var account_links = buffer.match(/\'[^\']+nav=transactionhistory.navigator.TransactionHistoryRedirect[^\']+\'/g)[0];
-            //console.log(account_links);
-            cb(null, account_links);
-        });
-
-
-        gunzip.on('error', function(err) {
-            console.log(err);
-            return cb(err);
-        });
-
-        res.pipe(gunzip);
-    })
-    .end();
-    //post_req.write({});
-}
-
-
-
-
-function hitPage(path, log, cb){
-    var options = {
-        host: 'www.online.fnb.co.za',
-        port: 443,
         agent: tunnelingAgent,
         path: path,
-        method: 'POST',
+        method: method,
+ 	agent: tunnelingAgent,
         headers: {
             'cookie': cookie,
-            'Host' :   'www.online.fnb.co.za',
+            'Host' :   host,
             'Connection' : 'keep-alive',
             'Content-Length' : 0,
             'Accept' :  'text/html, */*; q=0.01',
-            'Origin' : 'https://www.online.fnb.co.za',
+            'Origin' : host,
             'X-Requested-With' :   'XMLHttpRequest',
             'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
             'Referer' : 'https://www.online.fnb.co.za/banking/main.jsp',
@@ -325,6 +230,10 @@ function hitPage(path, log, cb){
             'Accept-Language' : 'en-US,en;q=0.8'
         }
     };
+
+    if(args.content_type){
+        options.headers['Content-Type'] = args.content_type;
+    }
 
     var gunzip = zlib.createGunzip();
 
@@ -362,26 +271,55 @@ function hitPage(path, log, cb){
     .end();
 }
 
+function hitHomePage(cb)
+{
+    hitPage({host: 'www.fnb.co.za', path:'/', method: 'GET', log:false}, cb);
+}
+
+function redirectAfterLogon(logon_result, cb){
+    hitPage({path: '/banking/Controller?' + logon_result.querystring, method: 'GET'}, cb);
+}
+
+function getBankAccountLinks(cb){
+    hitPage({
+        path: '/banking/Controller?nav=accounts.summaryofaccountbalances.navigator.SummaryOfAccountBalances&FARFN=4&actionchild=1&isTopMenu=true&targetDiv=workspace'
+    }, function(err, res){
+        var account_links = res.match(/\'[^\']+nav=transactionhistory.navigator.TransactionHistoryRedirect[^\']+\'/g)[0].replace("'", '').replace("'", '');
+        cb(null, account_links);
+    });
+}
+
+
 function setAccountContext(path, cb){
     path += '&targetDiv=workspace';
-    hitPage(path, true, cb);
+    hitPage({path: path, log:false}, cb);
 }
 
 
 function hitMainPage(cb){
-    hitPage('/banking/main.jsp', false, cb);
+    hitPage({path: '/banking/main.jsp', log:false}, cb);
 }
 
 function hitMainLoaded(cb){
-    hitPage('/banking/Controller?nav=navigator.MainLoaded', false, cb);
+    hitPage({path: '/banking/Controller?nav=navigator.MainLoaded', log:false}, cb);
 }
 
 function hitTohome(cb){
-    hitPage('/banking/Controller?nav=navigator.ToHome&action=dologin&countryCode=ZA&country=15&skin=0&targetDiv=workspace', false, cb);
+    hitPage({path: '/banking/Controller?nav=navigator.ToHome&action=dologin&countryCode=ZA&country=15&skin=0&targetDiv=workspace', log:false}, cb);
 }
 
 function doHEAD(cb){
-    hitPage('/04banners/banking/banner03/banner.html', false, cb);
+    hitPage({path: '/04banners/banking/banner03/banner.html', log:false}, cb);
+}
+
+
+function promptCSV(cb){
+    hitPage({
+        path: '/banking/Controller?nav=accounts.transactionhistory.navigator.TransactionHistoryDDADownload&downloadFormat=csv',
+        log: true,
+        method: 'GET',
+        content_type: 'application/x-zip'
+    }, cb);
 }
 
 
@@ -403,7 +341,9 @@ hitHomePage(function(err){
                                 //console.log('got the url with querystring to set account transaction context: ', link);
                                 //console.log('got the cookie 4: %s, attempting logon', cookie);
                                 setAccountContext(link, function(err){
-
+                                    promptCSV(function(){
+                                        console.log('done');
+                                    })
                                 });
                             });
                         });
