@@ -293,23 +293,6 @@ function setAccountContext(path, cb){
 }
 
 
-function hitMainPage(cb){
-    hitPage({path: '/banking/main.jsp', log:false}, cb);
-}
-
-function hitMainLoaded(cb){
-    hitPage({path: '/banking/Controller?nav=navigator.MainLoaded', log:false}, cb);
-}
-
-function hitTohome(cb){
-    hitPage({path: '/banking/Controller?nav=navigator.ToHome&action=dologin&countryCode=ZA&country=15&skin=0&targetDiv=workspace', log:false}, cb);
-}
-
-function doHEAD(cb){
-    hitPage({path: '/04banners/banking/banner03/banner.html', log:false}, cb);
-}
-
-
 function promptCSV(cb){
     var host =  'www.online.fnb.co.za';
     var path =  '/banking/Controller?nav=accounts.transactionhistory.navigator.TransactionHistoryDDADownload&downloadFormat=csv';
@@ -374,25 +357,13 @@ hitHomePage(function(err){
         //console.log('got the cookie 2: %s, attempting logon', cookie);
         //console.log('got the logon result, redirecting to get content with logon result: ', logon_result);
         redirectAfterLogon(logon_result, function(err, redirect_result){
-            hitMainPage(function(err, main_response){
-                // console.log('response after hitting main: %s', main_response);
-                hitMainLoaded(function(err, main_loaded_response){
-                    //console.log("finished hitting main loaded %s, proceeding", main_loaded_response);
-                    hitTohome(function(err, hit_home_response){
-                        //console.log('finished hitting it home: ', hit_home_response);
-                        doHEAD(function(err, head_response){
-                            // console.log('finished getting head response, ', head_response);
-                            getBankAccountLinks(function(err, link){
-                                //console.log('got the url with querystring to set account transaction context: ', link);
-                                //console.log('got the cookie 4: %s, attempting logon', cookie);
-                                setAccountContext(link, function(err){
-                                    promptCSV(function(){
-                                        console.log('done');
-                                    })
-                                });
-                            });
-                        });
-                    });
+            getBankAccountLinks(function(err, link){
+                //console.log('got the url with querystring to set account transaction context: ', link);
+                //console.log('got the cookie 4: %s, attempting logon', cookie);
+                setAccountContext(link, function(err){
+                    promptCSV(function(){
+                        console.log('done');
+                    })
                 });
             });
         });
