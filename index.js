@@ -7,6 +7,7 @@ var zlib        = require('zlib');
 var _           = require('underscore');
 var Q           = require('q');
 var AdmZip      = require('adm-zip');
+var express     = require('express');
 
 var tunnel = require('tunnel');
 
@@ -19,20 +20,23 @@ var tunnelingAgent = tunnel.httpsOverHttp({
   }
 });
 
-var enableTunneling = true;
+var enableTunneling = false;
 
-var cred_options = stdio.getopt({
-    'username': {
-        key: 'u',
-        mandatory: true,
-        args: 1
-    },
-    'password': {
-        key: 'p',
-        mandatory: true,
-        args: 1
-    },
-});
+// var cred_options = stdio.getopt({
+//     'username': {
+//         key: 'u',
+//         mandatory: true,
+//         args: 1
+//     },
+//     'password': {
+//         key: 'p',
+//         mandatory: true,
+//         args: 1
+//     },
+// });
+
+
+var cred_options = {};
 
 var cookie = '';
 var cookie_obj = {
@@ -300,7 +304,7 @@ function setAccountContext(path, cb){
 }
 
 
-function promptCSV(cb){
+function getCSV(cb){
     var host =  'www.online.fnb.co.za';
     var path =  '/banking/Controller?nav=accounts.transactionhistory.navigator.TransactionHistoryDDADownload&downloadFormat=csv';
     var method =  'GET';
@@ -360,24 +364,7 @@ function promptCSV(cb){
 }
 
 
-hitHomePage(function(err){
-    //console.log('got the cookie 1: %s, attempting logon', cookie);
-    logonToFNB(function(err, logon_result){
-        //console.log('got the cookie 2: %s, attempting logon', cookie);
-        //console.log('got the logon result, redirecting to get content with logon result: ', logon_result);
-        redirectAfterLogon(logon_result, function(err, redirect_result){
-            getBankAccountLinks(function(err, link){
-                //console.log('got the url with querystring to set account transaction context: ', link);
-                //console.log('got the cookie 4: %s, attempting logon', cookie);
-                setAccountContext(link, function(err){
-                    promptCSV(function(){
-                        console.log('done');
-                    })
-                });
-            });
-        });
-    });
-})
+
 
 
 // Q.nfcall(hitHomePage)
@@ -394,6 +381,33 @@ hitHomePage(function(err){
 //         Q.nfcall(setAccountContext, link);
 //     }))
 
+
+var app     = express();
+
+app.get('/scrape', function(req, res){
+    cred_options.username = req.query.username;
+    cred_options.password = req.query.password;
+
+    hitHomePage(function(err){
+        logonToFNB(function(err, logon_result){
+            redirectAfterLogon(logon_result, function(err, redirect_result){
+                getBankAccountLinks(function(err, link){
+                    setAccountContext(link, function(err){
+                        getCSV(function(err, zip_contents){
+                            console.log('going to scrape with uname: %s and password: %s', req.query.username, req.query.password);
+                            res.send(zip_contents);
+                        });
+                    });
+                });
+            });
+        });
+    })
+
+});
+
+console.log('starting service');
+
+app.listen('8081');
 
 
 
