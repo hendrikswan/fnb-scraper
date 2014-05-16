@@ -289,7 +289,7 @@ function getBankAccountLinks(cb){
 
 function setAccountContext(path, cb){
     path += '&targetDiv=workspace';
-    hitPage({path: path, log:false}, cb);
+    hitPage({path: path.replace('initial=initial', 'initial=false'), log:false}, cb);
 }
 
 
