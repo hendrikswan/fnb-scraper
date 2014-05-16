@@ -8,8 +8,8 @@ var _           = require('underscore');
 var Q           = require('q');
 var AdmZip      = require('adm-zip');
 var express     = require('express');
-
-var tunnel = require('tunnel');
+var csv         = require('csv');
+var tunnel      = require('tunnel');
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
@@ -364,6 +364,45 @@ function getCSV(cb){
 }
 
 
+function parseContentsToJson(csv_contents, cb){
+    var ad = {transactions: []};
+
+    csv()
+    .from.string(csv_contents)
+    .to.array(function(d) {
+        for (var i = 2; i < d.length; i++) {
+            if(i==2){
+                ad.account_nr = d[i][1];
+                ad.account_name = d[i][2];
+                continue;
+            }
+
+            if(i==3){
+                ad.current_balance = parseFloat(d[i][1]);
+                ad.available_balance = parseFloat(d[i][2]);
+                continue;
+            }
+
+            if(i==4){
+                continue;
+            }
+
+            var l = d[i];
+            ad.transactions.push({
+                date: l[0],
+                amount: parseFloat(l[1]),
+                balance: parseFloat(l[2]),
+                description: l[3]
+            });
+        }
+
+        // console.log(ad);
+
+        cb(null, ad);
+    });
+}
+
+
 
 
 
@@ -393,9 +432,11 @@ app.get('/scrape', function(req, res){
             redirectAfterLogon(logon_result, function(err, redirect_result){
                 getBankAccountLinks(function(err, link){
                     setAccountContext(link, function(err){
-                        getCSV(function(err, zip_contents){
+                        getCSV(function(err, csv_contents){
                             console.log('going to scrape with uname: %s and password: %s', req.query.username, req.query.password);
-                            res.send(zip_contents);
+                            parseContentsToJson(csv_contents, function(err, parsed){
+                                res.json(parsed);
+                            });
                         });
                     });
                 });
