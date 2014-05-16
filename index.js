@@ -7,8 +7,6 @@ var zlib        = require('zlib');
 var _           = require('underscore');
 var Q           = require('q');
 
-//https.globalAgent.options.secureProtocol = 'SSLv3_method';
-
 
 var cred_options = stdio.getopt({
     'username': {
@@ -69,8 +67,6 @@ function getCookieFromResponse(res){
             cookie+=cookie_key + '=' + cookie_val + ';';
         }
     }
-
-    // console.log(cookie);
 
     return cookie;
 }
@@ -193,23 +189,7 @@ function logonToFNB(cb){
 
 function hitHomePage(cb)
 {
-        // An object of options to indicate where to post to
-    var homepage_options = {
-        host: 'www.fnb.co.za',
-        port: '443',
-        path: '/',
-        method: 'GET',
-        headers: {
-            'accept-encoding': 'gzip',
-        }
-    };
-
-    // Set up the request
-    var homepage_req = https.request(homepage_options, function(res) {
-        parseAndSaveCookie(res);
-        cb(null);
-
-    }).end();
+    hitPage({host: 'www.fnb.co.za', path:'/', method: 'GET', log:true}, cb);
 }
 
 function redirectAfterLogon(logon_result, cb){
@@ -289,20 +269,25 @@ function getBankAccountLinks(cb){
 
 
 
-function hitPage(path, log, cb){
+function hitPage(args, cb){
+
+    var host = args.host || 'www.online.fnb.co.za';
+    var path = args.path || '/';
+    var log  = args.log  || false;
+    var method = args.method || 'POST';
+
     var options = {
-        hostname: '127.0.0.1',
-        port: '8888',
-        path: 'https://www.online.fnb.co.za' + path,
-        method: 'POST',
-        secureProtocol: 'SSLv3_method',
+        host: host,
+        port: '443',
+        path: path,
+        method: method,
         headers: {
             'cookie': cookie,
-            'Host' :   'www.online.fnb.co.za',
+            'Host' :   host,
             'Connection' : 'keep-alive',
             'Content-Length' : 0,
             'Accept' :  'text/html, */*; q=0.01',
-            'Origin' : 'https://www.online.fnb.co.za',
+            'Origin' : host,
             'X-Requested-With' :   'XMLHttpRequest',
             'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36',
             'Referer' : 'https://www.online.fnb.co.za/banking/main.jsp',
@@ -349,24 +334,24 @@ function hitPage(path, log, cb){
 
 function setAccountContext(path, cb){
     path += '&targetDiv=workspace';
-    hitPage(path, true, cb);
+    hitPage({path: path, log:true}, cb);
 }
 
 
 function hitMainPage(cb){
-    hitPage('/banking/main.jsp', false, cb);
+    hitPage({path: '/banking/main.jsp', log:false}, cb);
 }
 
 function hitMainLoaded(cb){
-    hitPage('/banking/Controller?nav=navigator.MainLoaded', false, cb);
+    hitPage({path: '/banking/Controller?nav=navigator.MainLoaded', log:false}, cb);
 }
 
 function hitTohome(cb){
-    hitPage('/banking/Controller?nav=navigator.ToHome&action=dologin&countryCode=ZA&country=15&skin=0&targetDiv=workspace', false, cb);
+    hitPage({path: '/banking/Controller?nav=navigator.ToHome&action=dologin&countryCode=ZA&country=15&skin=0&targetDiv=workspace', log:false}, cb);
 }
 
 function doHEAD(cb){
-    hitPage('/04banners/banking/banner03/banner.html', false, cb);
+    hitPage({path: '/04banners/banking/banner03/banner.html', log:false}, cb);
 }
 
 
