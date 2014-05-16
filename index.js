@@ -354,14 +354,14 @@ function promptCSV(cb){
                     pos += data[i].length;
                 }
 
-
-                console.log(buf);
                 var zip = new AdmZip(buf);
                 var zipEntries = zip.getEntries();
-                console.log(zipEntries.length)
 
                 for (var i = 0; i < zipEntries.length; i++){
-                    console.log(zip.readAsText(zipEntries[i]));
+                    var zip_contents = zip.readAsText(zipEntries[i]);
+                    zip_contents = zip_contents.replace(/.*22SEVEN.*/g, '');
+                    console.log(zip_contents);
+                    cb(null, zip_contents);
                 }
             });
     });
