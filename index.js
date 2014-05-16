@@ -7,6 +7,17 @@ var zlib        = require('zlib');
 var _           = require('underscore');
 var Q           = require('q');
 
+var tunnel = require('tunnel');
+
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+
+var tunnelingAgent = tunnel.httpsOverHttp({
+  proxy: {
+    host: 'localhost',
+    port: 8888
+  }
+});
+
 //https.globalAgent.options.secureProtocol = 'SSLv3_method';
 
 
@@ -99,8 +110,8 @@ function logonToFNB(cb){
         products: '',
         bankingUrl: 'https://www.online.fnb.co.za',
         nav: 'navigator.UserLogon',
-        Username:cred_options.username,
-        Password:cred_options.password
+        Username: cred_options.username,
+        Password: cred_options.password
     });
 
 
@@ -112,6 +123,7 @@ function logonToFNB(cb){
     var post_options = {
         host: 'www.online.fnb.co.za',
         port: '443',
+        agent: tunnelingAgent,
         path: '/login/Controller',
         method: 'POST',
         headers: {
@@ -197,6 +209,7 @@ function hitHomePage(cb)
     var homepage_options = {
         host: 'www.fnb.co.za',
         port: '443',
+        agent: tunnelingAgent,
         path: '/',
         method: 'GET',
         headers: {
@@ -216,6 +229,7 @@ function redirectAfterLogon(logon_result, cb){
     var options = {
         host: 'www.online.fnb.co.za',
         port: '443',
+        agent: tunnelingAgent,
         path: '/banking/Controller?' + logon_result.querystring,
         method: 'GET',
         headers: {
@@ -246,6 +260,7 @@ function getBankAccountLinks(cb){
     var options = {
         host: 'www.online.fnb.co.za',
         port: '443',
+        agent: tunnelingAgent,
         path: '/banking/Controller?nav=accounts.summaryofaccountbalances.navigator.SummaryOfAccountBalances&FARFN=4&actionchild=1&isTopMenu=true&targetDiv=workspace',
         method: 'POST',
         headers: {
@@ -291,11 +306,11 @@ function getBankAccountLinks(cb){
 
 function hitPage(path, log, cb){
     var options = {
-        hostname: '127.0.0.1',
-        port: '8888',
-        path: 'https://www.online.fnb.co.za' + path,
+        host: 'www.online.fnb.co.za',
+        port: 443,
+        agent: tunnelingAgent,
+        path: path,
         method: 'POST',
-        secureProtocol: 'SSLv3_method',
         headers: {
             'cookie': cookie,
             'Host' :   'www.online.fnb.co.za',
@@ -368,11 +383,6 @@ function hitTohome(cb){
 function doHEAD(cb){
     hitPage('/04banners/banking/banner03/banner.html', false, cb);
 }
-
-
-
-
-
 
 
 hitHomePage(function(err){
