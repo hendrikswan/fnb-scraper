@@ -19,6 +19,7 @@ var tunnelingAgent = tunnel.httpsOverHttp({
   }
 });
 
+var enableTunneling = true;
 
 var cred_options = stdio.getopt({
     'username': {
@@ -120,7 +121,6 @@ function logonToFNB(cb){
     var post_options = {
         host: 'www.online.fnb.co.za',
         port: '443',
-        agent: tunnelingAgent,
         path: '/login/Controller',
         method: 'POST',
         headers: {
@@ -131,6 +131,10 @@ function logonToFNB(cb){
             'cookie': cookie
         }
     };
+
+    if(enableTunneling){
+        post_options['agent'] = tunnelingAgent;
+    }
 
     var post_req = https.request(post_options, function(res) {
         res.pipe(zlib.createGunzip()).on('data', function(chunk) {
@@ -212,7 +216,6 @@ function hitPage(args, cb){
         port: '443',
         path: path,
         method: method,
- 	    agent: tunnelingAgent,
         headers: {
             'cookie': cookie,
             'Host' :   host,
@@ -227,6 +230,10 @@ function hitPage(args, cb){
             'Accept-Language' : 'en-US,en;q=0.8'
         }
     };
+
+    if(enableTunneling){
+        options['agent'] = tunnelingAgent;
+    }
 
     if(args.content_type){
         options.headers['Content-Type'] = args.content_type;
@@ -303,7 +310,6 @@ function promptCSV(cb){
         port: '443',
         path: path,
         method: method,
-        agent: tunnelingAgent,
         headers: {
             'cookie': cookie,
             'Host' :   host,
@@ -320,6 +326,9 @@ function promptCSV(cb){
         }
     };
 
+    if(enableTunneling){
+        options['agent'] = tunnelingAgent;
+    }
 
     https.get(options, function(res) {
         var data = [], dataLen = 0;
