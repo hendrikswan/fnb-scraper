@@ -370,20 +370,19 @@ function parseContentsToJson(csv_contents, cb){
     csv()
     .from.string(csv_contents)
     .to.array(function(d) {
-        for (var i = 2; i < d.length; i++) {
-            if(i==2){
+        for (var i = 3; i < d.length; i++) {
+            if(i==3){
                 ad.account_nr = d[i][1];
-                ad.account_name = d[i][2];
                 continue;
             }
 
-            if(i==3){
+            if(i==4){
                 ad.current_balance = parseFloat(d[i][1]);
                 ad.available_balance = parseFloat(d[i][2]);
                 continue;
             }
 
-            if(i==4){
+            if(i==5 || i ==6){
                 continue;
             }
 
